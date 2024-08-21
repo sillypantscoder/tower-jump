@@ -7,47 +7,28 @@ class Player extends Box {
 		super(x, y, 50, 50, true)
 		this.pressingLeft = false
 		this.pressingRight = false
-	}
-	setBody() {
-		super.setBody()
-		if (this.body == null) throw new Error("this.setBody() did not add a body")
 		this.body.friction = 0
 	}
 	tick() {
 		super.tick()
-		if (this.body == null) throw new Error("Cannot tick object with nonexistent body")
 		if (this.pressingLeft) this.moveLeft()
 		if (this.pressingRight) this.moveRight()
 		var v = Body.getVelocity(this.body)
 		Body.setVelocity(this.body, Vector.create(v.x * 0.95, v.y))
 	}
 	moveLeft() {
-		if (this.body == null) throw new Error("Cannot perform movement on player with nonexistent body")
 		var v = Body.getVelocity(this.body)
 		Body.setVelocity(this.body, Vector.create(v.x - 0.7, v.y))
 	}
 	moveRight() {
-		if (this.body == null) throw new Error("Cannot perform movement on player with nonexistent body")
 		var v = Body.getVelocity(this.body)
 		Body.setVelocity(this.body, Vector.create(v.x + 0.7, v.y))
 	}
 	jump() {
-		if (this.body == null) throw new Error("Cannot perform movement on player with nonexistent body")
 		var v = Body.getVelocity(this.body)
-		Body.setVelocity(this.body, Vector.create(v.x, (v.y / 1) - 10))
+		Body.setVelocity(this.body, Vector.create(v.x, (v.y / 1) - 11))
 	}
 }
-class Indicator extends Box {
-	/**
-	 * @param {number} x
-	 * @param {number} y
-	 */
-	constructor(x, y) {
-		super(x, y, 10, 10, false)
-	}
-	getStyles() { return "background: red;" }
-}
-(new Indicator(0, 0)).add();
 
 /** @type {Player} */
 var player = addPlayer();
@@ -76,7 +57,7 @@ window.addEventListener("keyup", (e) => {
 
 function generateMaze() {
 	var layout = new MazeLayout(5)
-	layout.addNRows(10)
+	layout.addNRows(45)
 	var boxes = MazeDrawing.draw(layout)
 	boxes.forEach((b) => b.add())
 }

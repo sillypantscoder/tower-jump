@@ -113,7 +113,6 @@ function test() {
 	layout.addNRows(10)
 	layout.printInfo()
 }
-test()
 
 class MazeDrawing {
 	static cellWidth = 150
@@ -122,10 +121,10 @@ class MazeDrawing {
 	/**
 	 * @param {number} i
 	 * @param {MazeRow} row
-	 * @returns {Box[]}
+	 * @returns {GameObject[]}
 	 */
 	static drawRow(i, row) {
-		/** @type {Box[]} */
+		/** @type {GameObject[]} */
 		var boxes = []
 		// Wall left
 		var rowBottom = i * -this.cellHeight
@@ -140,18 +139,27 @@ class MazeDrawing {
 			if (row[c].hasCeiling) {
 				boxes.push(Box.fromTopLeft((c * this.cellWidth) - this.wallThickness, (rowBottom - this.cellHeight) - this.wallThickness, this.cellWidth + this.wallThickness, this.wallThickness, false))
 			}
+			// Accessibility
+			if (row[c].isAccessible) {
+				boxes.push(new NonSolidBox(
+					((c + 0.5) * this.cellWidth) - (this.wallThickness / 2),
+					(rowBottom - (0.5 * this.cellHeight)) - (this.wallThickness / 2),
+					this.wallThickness,
+					this.wallThickness
+				))
+			}
 		}
 		return boxes
 	}
 	/**
 	 * @param {MazeLayout} layout
-	 * @returns {Box[]}
+	 * @returns {GameObject[]}
 	 */
 	static draw(layout) {
-		/** @type {Box[]} */
+		/** @type {GameObject[]} */
 		var boxes = []
 		// Bottom
-		boxes.push(Box.fromTopLeft(-this.wallThickness, 0, (this.cellWidth * layout.width) + this.wallThickness, this.wallThickness, false))
+		boxes.push(Box.fromTopLeft(0, -this.wallThickness, (this.cellWidth * layout.width) - this.wallThickness, this.wallThickness, false))
 		// Draw rows
 		for (var i = 0; i < layout.rows.length; i++) {
 			var newBoxes = MazeDrawing.drawRow(i, layout.rows[i])
