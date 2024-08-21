@@ -5,4 +5,6 @@ body {
 }
 body > div {
 	position: absolute;
+	font-family: sans-serif;
+	font-size: 50px;
 }

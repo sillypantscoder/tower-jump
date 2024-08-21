@@ -81,10 +81,12 @@ class PhysicsObject extends GameObject {
 	tick() {
 		this.x = this.body.position.x
 		this.y = this.body.position.y
+		this.adjustPosition()
 		var worldX = this.x - (this.getWidth() / 2)
 		var worldY = this.y - (this.getHeight() / 2)
 		this.elm.setAttribute("style", `top: ${(worldY - camera.y) * camera.zoom}px; left: ${(worldX - camera.x) * camera.zoom}px; width: ${this.getWidth() * camera.zoom}px; height: ${this.getHeight() * camera.zoom}px; transform: rotate(${this.body.angle}rad); ${this.getStyles()}`)
 	}
+	adjustPosition() {}
 	getWidth() { return 50; }
 	getHeight() { return 50; }
 	getStyles() { return "background: black;"; }
@@ -131,13 +133,14 @@ class NonSolidBox extends GameObject {
 		this.y = y
 		this.w = w
 		this.h = h
+		this.angle = 0
 	}
 	getWidth() { return this.w; }
 	getHeight() { return this.h; }
 	tick() {
 		var worldX = this.x - (this.getWidth() / 2)
 		var worldY = this.y - (this.getHeight() / 2)
-		this.elm.setAttribute("style", `top: ${(worldY - camera.y) * camera.zoom}px; left: ${(worldX - camera.x) * camera.zoom}px; width: ${this.getWidth() * camera.zoom}px; height: ${this.getHeight() * camera.zoom}px; ${this.getStyles()}`)
+		this.elm.setAttribute("style", `top: ${(worldY - camera.y) * camera.zoom}px; left: ${(worldX - camera.x) * camera.zoom}px; width: ${this.getWidth() * camera.zoom}px; height: ${this.getHeight() * camera.zoom}px; transform: rotate(${this.angle}rad); ${this.getStyles()}`)
 	}
 	getStyles() { return "background: black; opacity: 0.1;"; }
 }
