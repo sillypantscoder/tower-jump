@@ -79,8 +79,8 @@ class MazeLayout {
 		var newRow = []
 		for (var i = 0; i < this.width; i++) {
 			newRow.push({
-				hasWallRight: Math.random() < 0.5,
-				hasCeiling: Math.random() < 0.7,
+				hasWallRight: Math.random() < 0.4,
+				hasCeiling: Math.random() < 0.6,
 				isAccessible: false
 			})
 			if (i == this.width - 1) {
@@ -89,10 +89,13 @@ class MazeLayout {
 		}
 		return newRow
 	}
-	addNextRow() {
+	async addNextRow() {
 		var tries = 0
 		while (true) {
 			tries += 1;
+			if (tries % 1 == 0) {
+				await new Promise((resolve) => requestAnimationFrame(resolve));
+			}
 			/** @type {MazeRow} */
 			var newRow = [];
 			for (var i = 0; i < this.amt_new_rows; i++) {
@@ -116,8 +119,8 @@ class MazeLayout {
 			}
 			if (isValid) break;
 			else this.rows.splice(this.rows.length - this.amt_new_rows, this.amt_new_rows)
-			if (tries >= 500) {
-				throw new Error("reached 500 tries with no success")
+			if (tries >= 1000) {
+				throw new Error("reached 1000 tries with no success")
 			}
 		}
 		// Save the row!
@@ -127,9 +130,10 @@ class MazeLayout {
 	/**
 	 * @param {number} n
 	 */
-	addNRows(n) {
+	async addNRows(n) {
 		for (var i = 0; i < n; i += this.amt_new_rows) {
-			this.addNextRow();
+			await this.addNextRow();
+			await new Promise((resolve) => requestAnimationFrame(resolve));
 		}
 	}
 	printInfo() {

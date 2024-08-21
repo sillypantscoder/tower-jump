@@ -30,11 +30,17 @@ class Player extends Box {
 	}
 }
 
-/** @type {Player} */
-var player = addPlayer();
+function clearScreen() {
+	for (; objects.length > 0; ) {
+		objects[0].remove()
+	}
+}
+
+/** @type {Player | null} */
+var player = null;
 
 function addPlayer() {
-	if (player) player.remove()
+	clearScreen()
 	player = new Player(MazeDrawing.cellWidth / 2, MazeDrawing.cellHeight / -2)
 	player.add();
 	// camera
@@ -47,20 +53,23 @@ function addPlayer() {
 }
 
 window.addEventListener("keydown", (e) => {
+	if (player == null) return
 	if (e.key == "ArrowLeft") player.pressingLeft = true
 	if (e.key == "ArrowRight") player.pressingRight = true
 	if (e.key == "ArrowUp") player.jump()
 })
 window.addEventListener("keyup", (e) => {
+	if (player == null) return
 	if (e.key == "ArrowLeft") player.pressingLeft = false
 	if (e.key == "ArrowRight") player.pressingRight = false
 })
 
-function generateMaze() {
+async function generateMaze() {
 	var layout = new MazeLayout(10)
-	layout.addNRows(45)
+	await layout.addNRows(35)
 	var boxes = MazeDrawing.draw(layout)
-	boxes.forEach((b) => b.add())
+	// Draw to the screen
 	addPlayer()
+	boxes.forEach((b) => b.add())
 }
 requestAnimationFrame(generateMaze)
