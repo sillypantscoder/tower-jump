@@ -12,18 +12,64 @@ class MazeLayout {
 		 * @type {MazeRow[]}
 		 */
 		this.rows = []
+		this.extraLogging = false
 	}
-	getPreviousRowAccessibility() {
-		if (this.rows.length == 0) {
-			var a = [true]
-			for (var i = 1; i < this.width; i++) a.push(false)
-			return a
-		} else {
-			var row = this.rows[this.rows.length - 1];
-			/** @type {boolean[]} */ var a = [];
-			for (var i = 0; i < this.width; i++) a.push(row[i].isAccessible && !row[i].hasCeiling)
-			return a
+	/**
+	 * Completely reset and update the accessibility of all cells.
+	 */
+	updateAccessibility() {
+		for (var i = 0; i < this.rows.length; i++) {
+			for (var j = 0; j < this.width; j++) {
+				this.rows[i][j].isAccessible = false
+			}
 		}
+		this.rows[0][0].isAccessible = true
+		while (this.updateAccessibilityStage()) {}
+	}
+	/**
+	 * Go through the whole board and find where acessibility can be
+	 *  expanded to adjacent cells. If any changes are made, this
+	 *  function will need to be called again.
+	 * @returns Whether any changes were made.
+	 */
+	updateAccessibilityStage() {
+		var rows = this.rows
+		var needToReset = [false]
+		/**
+		 * @param {number} row
+		 * @param {number} column
+		 */
+		function setAdjacentAccessible(row, column) {
+			if (row < 0 || row >= rows.length) return
+			var newRow = rows[row]
+			if (column < 0 || column >= newRow.length) return
+			// Check left and right
+			if (column - 1 >= 0 && newRow[column - 1].hasWallRight == false) setAccessible(row, column - 1)
+			if (newRow[column].hasWallRight == false) setAccessible(row, column + 1)
+			// Check up and down
+			if (newRow[column].hasCeiling == false) setAccessible(row + 1, column)
+			if (row - 1 >= 0 && rows[row - 1][column].hasCeiling == false) setAccessible(row - 1, column)
+		}
+		/**
+		 * Set a specific column in this row as accessible.
+		 * @param {number} row
+		 * @param {number} column
+		 */
+		function setAccessible(row, column) {
+			if (row < 0 || row >= rows.length) return
+			var newRow = rows[row]
+			if (column < 0 || column >= newRow.length || newRow[column].isAccessible == true) return
+			newRow[column].isAccessible = true
+			needToReset[0] = true
+		}
+		for (var i = this.rows.length - 1; i >= 0; i--) {
+			for (var j = 0; j < this.width; j++) {
+				if (this.rows[i][j].isAccessible) {
+					setAdjacentAccessible(i, j)
+				}
+			}
+		}
+		return needToReset[0]
 	}
 	getNextRowAttempt() {
 		/**
@@ -40,24 +86,6 @@ class MazeLayout {
 				newRow[i].hasWallRight = true
 			}
 		}
-		// Find which cells are accessible
-		/**
-		 * Set a specific column in this row as accessible.
-		 * This also sets adjacent cells to accessible where possible.
-		 * @param {number} i
-		 */
-		function setAccessible(i) {
-			if (i < 0 || i >= newRow.length || newRow[i].isAccessible == true) return
-			newRow[i].isAccessible = true
-			if (newRow[i - 1] && newRow[i - 1].hasWallRight == false) setAccessible(i - 1)
-			if (newRow[i].hasWallRight == false) setAccessible(i + 1)
-		}
-		var previous = this.getPreviousRowAccessibility()
-		for (var i = 0; i < previous.length; i++) {
-			if (previous[i]) {
-				setAccessible(i)
-			}
-		}
 		return newRow
 	}
 	addNextRow() {
@@ -65,8 +93,15 @@ class MazeLayout {
 		while (true) {
 			tries += 1;
 			var newRow = this.getNextRowAttempt()
+			// Update the accessibility.
+			this.rows.push(newRow)
+			this.updateAccessibility();
+			if (this.extraLogging) {
+				console.log(`Row ${this.rows.length} attempt ${tries}`)
+				this.printInfo()
+			}
 			// Check whether there is at least one column that
-			// is considered accessible AND the ceiling at that column is gone.
+			// is considered accessible AND the ceiling at that column is gone
 			var isValid = false;
 			for (var i = 0; i < newRow.length; i++) {
 				if (newRow[i].isAccessible && !newRow[i].hasCeiling) {
@@ -76,9 +111,13 @@ class MazeLayout {
 				}
 			}
 			if (isValid) break;
+			else this.rows.splice(this.rows.length - 1, 1)
+			if (tries >= 6) {
+				throw new Error("reached 6 tries with no success")
+			}
 		}
 		// Save the row!
-		this.rows.push(newRow)
+		this.updateAccessibility()
 		console.log(`Successfully generated row ${this.rows.length} after ${tries} tries`)
 	}
 	/**
@@ -93,7 +132,8 @@ class MazeLayout {
 		var s = ""
 		for (var i = 0; i < this.rows.length; i++) {
 			for (var j = 0; j < this.width; j++) {
-				s += "  "
+				if (this.rows[i][j].isAccessible) s += ".."
+				else s += "  "
 				if (this.rows[i][j].hasWallRight) s += "|"
 				else s += " "
 			}
