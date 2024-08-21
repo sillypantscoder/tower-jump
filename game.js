@@ -34,6 +34,7 @@ class Player extends Box {
 var player = addPlayer();
 
 function addPlayer() {
+	if (player) player.remove()
 	player = new Player(MazeDrawing.cellWidth / 2, MazeDrawing.cellHeight / -2)
 	player.add();
 	// camera
@@ -56,9 +57,10 @@ window.addEventListener("keyup", (e) => {
 })
 
 function generateMaze() {
-	var layout = new MazeLayout(5)
+	var layout = new MazeLayout(10)
 	layout.addNRows(45)
 	var boxes = MazeDrawing.draw(layout)
 	boxes.forEach((b) => b.add())
+	addPlayer()
 }
-generateMaze()
+requestAnimationFrame(generateMaze)

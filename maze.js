@@ -13,6 +13,7 @@ class MazeLayout {
 		 */
 		this.rows = []
 		this.extraLogging = false
+		this.amt_new_rows = 5
 	}
 	/**
 	 * Completely reset and update the accessibility of all cells.
@@ -92,12 +93,15 @@ class MazeLayout {
 		var tries = 0
 		while (true) {
 			tries += 1;
-			var newRow = this.getNextRowAttempt()
-			// Update the accessibility.
-			this.rows.push(newRow)
+			/** @type {MazeRow} */
+			var newRow = [];
+			for (var i = 0; i < this.amt_new_rows; i++) {
+				var newRow = this.getNextRowAttempt()
+				this.rows.push(newRow)
+			}
 			this.updateAccessibility();
 			if (this.extraLogging) {
-				console.log(`Row ${this.rows.length} attempt ${tries}`)
+				console.log(`Row ${this.rows.length} attempt ${tries}:`)
 				this.printInfo()
 			}
 			// Check whether there is at least one column that
@@ -111,9 +115,9 @@ class MazeLayout {
 				}
 			}
 			if (isValid) break;
-			else this.rows.splice(this.rows.length - 1, 1)
-			if (tries >= 6) {
-				throw new Error("reached 6 tries with no success")
+			else this.rows.splice(this.rows.length - this.amt_new_rows, this.amt_new_rows)
+			if (tries >= 500) {
+				throw new Error("reached 500 tries with no success")
 			}
 		}
 		// Save the row!
@@ -124,7 +128,7 @@ class MazeLayout {
 	 * @param {number} n
 	 */
 	addNRows(n) {
-		for (var i = 0; i < n; i++) {
+		for (var i = 0; i < n; i += this.amt_new_rows) {
 			this.addNextRow();
 		}
 	}
