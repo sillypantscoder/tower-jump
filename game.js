@@ -37,19 +37,23 @@ class Player extends Box {
 		Body.setVelocity(this.body, Vector.create(v.x, (v.y / 1) - 10))
 	}
 }
-
-// Maze settings
-var wallThickness = 40
-var cellHeight = 150
-var cellWidth = 150
-var mazeWidth = 5
-var mazeHeight = 45
+class Indicator extends Box {
+	/**
+	 * @param {number} x
+	 * @param {number} y
+	 */
+	constructor(x, y) {
+		super(x, y, 10, 10, false)
+	}
+	getStyles() { return "background: red;" }
+}
+(new Indicator(0, 0)).add();
 
 /** @type {Player} */
 var player = addPlayer();
 
 function addPlayer() {
-	player = new Player(cellWidth / 2, 0)
+	player = new Player(MazeDrawing.cellWidth / 2, MazeDrawing.cellHeight / -2)
 	player.add();
 	// camera
 	camera.target.object = player.body
@@ -71,103 +75,9 @@ window.addEventListener("keyup", (e) => {
 })
 
 function generateMaze() {
-	// Generate the maze
-	//   (get a list of the current maze state)
-	var lastFloors = []
-	var lastAcc = []
-	for (var i = 0; i < mazeWidth; i++) {
-		lastFloors.push(false)
-		lastAcc.push(false)
-	}
-	lastAcc[0] = true
-	// Function to generate a row:
-	/**
-	 * @param {number} y
-	 * @param {boolean[]} prevFloors
-	 * @param {boolean[]} prevAccessible
-	 */
-	function generateMazeRow(y, prevFloors, prevAccessible) {
-		// Walls
-		Box.fromTopLeft(0, y, wallThickness, cellHeight, false).add();
-		Box.fromTopLeft(cellWidth * mazeWidth, y, wallThickness, cellHeight, false).add();
-		// Generate the maze
-		var valid = false
-		var tries = 0
-		/** @type {boolean[]} */
-		var floor = []
-		/** @type {boolean[]} */
-		var walls = []
-		/** @type {boolean[]} */
-		var accessible = []
-		while (! valid) {
-			floor = []
-			walls = []
-			for (var i = 0; i < mazeWidth; i++) {
-				floor.push(Math.random() < 0.7)
-			}
-			for (var i = 0; i < mazeWidth; i++) {
-				walls.push(Math.random() < 0.5)
-			}
-			// Validate the maze
-			accessible = []
-			for (var i = 0; i < mazeWidth; i++) {
-				accessible.push(false)
-			}
-			// Set a specific column in this row as accessible.
-			// This also sets adjacent cells to accessible where possible.
-			/**
-			 * @param {number} i
-			 */
-			function setAccessible(i) {
-				if (i < 0 || i >= mazeWidth || accessible[i] == true) return
-				accessible[i] = true
-				if (walls[i] == false) setAccessible(i - 1)
-				if (walls[i + 1] == false) setAccessible(i + 1)
-			}
-			for (var i = 0; i < prevFloors.length; i++) {
-				if (! prevFloors[i]) {
-					if (prevAccessible[i]) {
-						setAccessible(i)
-					}
-				}
-			}
-			// Check whether there is at least one column that
-			// is considered accessible AND the floor at that column is gone.
-			var valid = false
-			for (var i = 0; i < accessible.length; i++) {
-				if (accessible[i] && (! floor[i])) {
-					valid = true
-				}
-			}
-			tries += 1
-		}
-		// Draw the maze
-		for (var i = 0; i < floor.length; i++) {
-			if (floor[i]) {
-				Box.fromTopLeft(i * cellWidth, y + cellHeight, cellWidth, wallThickness, false).add();
-			}
-		}
-
-		for (var i = 0; i < walls.length; i++) {
-			if (walls[i]) {
-				Box.fromTopLeft(i * cellWidth, y, wallThickness, cellHeight, false).add();
-			}
-			if (accessible[i]) {
-				//createRect((i + 0.5) * cellWidth, y + (0.5 * cellHeight), 5, 5, false)
-			}
-		}
-		// Finish
-		console.log(`Finished row ${y / cellHeight} after ${tries} tries`)
-		return [floor, accessible]
-	}
-	// Generate the rows
-	for (var i = 0; i < mazeHeight; i++) {
-		var result = generateMazeRow(i * cellHeight, lastFloors, lastAcc)
-		lastFloors = result[0]
-		lastAcc = result[1]
-	}
-	// Add walls
-	Box.fromTopLeft(0, -wallThickness, mazeWidth * cellWidth, wallThickness, false).add();
-	Box.fromTopLeft(0, mazeHeight * cellHeight, mazeWidth * cellWidth, wallThickness, false).add();
+	var layout = new MazeLayout(5)
+	layout.addNRows(10)
+	var boxes = MazeDrawing.draw(layout)
+	boxes.forEach((b) => b.add())
 }
 generateMaze()
