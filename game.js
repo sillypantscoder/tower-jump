@@ -1,4 +1,8 @@
 class Player extends Box {
+	/**
+	 * @param {number} x
+	 * @param {number} y
+	 */
 	constructor(x, y) {
 		super(x, y, 50, 50, true)
 		this.pressingLeft = false
@@ -6,24 +10,29 @@ class Player extends Box {
 	}
 	setBody() {
 		super.setBody()
+		if (this.body == null) throw new Error("this.setBody() did not add a body")
 		this.body.friction = 0
 	}
 	tick() {
 		super.tick()
+		if (this.body == null) throw new Error("Cannot tick object with nonexistent body")
 		if (this.pressingLeft) this.moveLeft()
 		if (this.pressingRight) this.moveRight()
 		var v = Body.getVelocity(this.body)
 		Body.setVelocity(this.body, Vector.create(v.x * 0.95, v.y))
 	}
 	moveLeft() {
+		if (this.body == null) throw new Error("Cannot perform movement on player with nonexistent body")
 		var v = Body.getVelocity(this.body)
 		Body.setVelocity(this.body, Vector.create(v.x - 0.7, v.y))
 	}
 	moveRight() {
+		if (this.body == null) throw new Error("Cannot perform movement on player with nonexistent body")
 		var v = Body.getVelocity(this.body)
 		Body.setVelocity(this.body, Vector.create(v.x + 0.7, v.y))
 	}
 	jump() {
+		if (this.body == null) throw new Error("Cannot perform movement on player with nonexistent body")
 		var v = Body.getVelocity(this.body)
 		Body.setVelocity(this.body, Vector.create(v.x, (v.y / 1) - 10))
 	}
@@ -36,6 +45,7 @@ var cellWidth = 150
 var mazeWidth = 5
 var mazeHeight = 45
 
+/** @type {Player} */
 var player = addPlayer();
 
 function addPlayer() {
@@ -71,6 +81,11 @@ function generateMaze() {
 	}
 	lastAcc[0] = true
 	// Function to generate a row:
+	/**
+	 * @param {number} y
+	 * @param {boolean[]} prevFloors
+	 * @param {boolean[]} prevAccessible
+	 */
 	function generateMazeRow(y, prevFloors, prevAccessible) {
 		// Walls
 		Box.fromTopLeft(0, y, wallThickness, cellHeight, false).add();
@@ -78,9 +93,15 @@ function generateMaze() {
 		// Generate the maze
 		var valid = false
 		var tries = 0
+		/** @type {boolean[]} */
+		var floor = []
+		/** @type {boolean[]} */
+		var walls = []
+		/** @type {boolean[]} */
+		var accessible = []
 		while (! valid) {
-			var floor = []
-			var walls = []
+			floor = []
+			walls = []
 			for (var i = 0; i < mazeWidth; i++) {
 				floor.push(Math.random() < 0.7)
 			}
@@ -88,12 +109,15 @@ function generateMaze() {
 				walls.push(Math.random() < 0.5)
 			}
 			// Validate the maze
-			var accessible = []
+			accessible = []
 			for (var i = 0; i < mazeWidth; i++) {
 				accessible.push(false)
 			}
 			// Set a specific column in this row as accessible.
 			// This also sets adjacent cells to accessible where possible.
+			/**
+			 * @param {number} i
+			 */
 			function setAccessible(i) {
 				if (i < 0 || i >= mazeWidth || accessible[i] == true) return
 				accessible[i] = true

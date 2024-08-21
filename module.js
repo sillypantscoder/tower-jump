@@ -22,6 +22,7 @@ var camera = {
 	y: 0,
 	zoom: 1,
 	target: {
+		/** @type {{ position: { x: number, y: number } } | null} */
 		object: null,
 		x: 0,
 		y: 0,
@@ -51,30 +52,40 @@ class GameObject {
 	tick() {}
 }
 class PhysicsObject extends GameObject {
+	/**
+	 * @param {number} x
+	 * @param {number} y
+	 */
 	constructor(x, y) {
 		super()
 		this.x = x
 		this.y = y
+		/** @type {Matter.Body | null} */
 		this.body = null
 	}
 	add() {
 		if (this.body == null) this.setBody()
+		if (this.body == null) throw new Error("this.setBody() did not add a body")
 		super.add()
 		Composite.add(engine.world, this.body)
 	}
 	setBody() {
 		this.body = this.createBody()
+		// @ts-ignore
 		this.body._PhysicsObject = this
 		Body.setPosition(this.body, { x: this.x, y: this.y })
 	}
+	/** @returns {Matter.Body} */
 	createBody() {
 		throw new Error("Please specify a body")
 	}
 	remove() {
 		super.remove()
+		if (this.body == null) throw new Error("Cannot remove nonexistent body")
 		Composite.remove(engine.world, this.body)
 	}
 	tick() {
+		if (this.body == null) throw new Error("Cannot tick object with nonexistent body")
 		this.x = this.body.position.x
 		this.y = this.body.position.y
 		var worldX = this.x - (this.getWidth() / 2)
@@ -86,6 +97,13 @@ class PhysicsObject extends GameObject {
 	getStyles() { return "background: black;"; }
 }
 class Box extends PhysicsObject {
+	/**
+	 * @param {number} x
+	 * @param {number} y
+	 * @param {number} w
+	 * @param {number} h
+	 * @param {boolean} canMove
+	 */
 	constructor(x, y, w, h, canMove) {
 		super(x, y)
 		this.w = w
@@ -99,6 +117,13 @@ class Box extends PhysicsObject {
 	}
 	getWidth() { return this.w; }
 	getHeight() { return this.h; }
+	/**
+	 * @param {number} x
+	 * @param {number} y
+	 * @param {number} w
+	 * @param {number} h
+	 * @param {boolean} canMove
+	 */
 	static fromTopLeft(x, y, w, h, canMove) {
 		return new Box(x + (w / 2), y + (h / 2), w, h, canMove)
 	}
@@ -107,7 +132,9 @@ class Box extends PhysicsObject {
 Events.on(engine, "afterUpdate", () => {
 	camera.tick()
 	for (var body of [...engine.world.bodies]) {
+		// @ts-ignore
 		if (body._PhysicsObject) {
+			// @ts-ignore
 			body._PhysicsObject.tick()
 		}
 	}
