@@ -144,6 +144,9 @@ class NonSolidBox extends GameObject {
 	}
 	getStyles() { return "background: black; opacity: 0.1;"; }
 }
+class HighlightedNonSolidBox extends NonSolidBox {
+	getStyles() { return "background: blue; opacity: 0.1;"; }
+}
 
 Events.on(engine, "afterUpdate", () => {
 	camera.tick()

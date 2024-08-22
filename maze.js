@@ -1,5 +1,6 @@
 /**
- * @typedef {{ hasWallRight: boolean, hasCeiling: boolean, isAccessible: boolean }[]} MazeRow
+ * @typedef {"never" | "always" | "after_down"} Accessibility
+ * @typedef {{ hasWallRight: boolean, hasCeiling: boolean, isAccessible: Accessibility }[]} MazeRow
  */
 
 class MazeLayout {
@@ -13,7 +14,7 @@ class MazeLayout {
 		 */
 		this.rows = []
 		this.extraLogging = false
-		this.amt_new_rows = 5
+		this.amt_new_rows = 10
 	}
 	/**
 	 * Completely reset and update the accessibility of all cells.
@@ -21,10 +22,10 @@ class MazeLayout {
 	updateAccessibility() {
 		for (var i = 0; i < this.rows.length; i++) {
 			for (var j = 0; j < this.width; j++) {
-				this.rows[i][j].isAccessible = false
+				this.rows[i][j].isAccessible = "never"
 			}
 		}
-		this.rows[0][0].isAccessible = true
+		this.rows[0][0].isAccessible = "always"
 		while (this.updateAccessibilityStage()) {}
 	}
 	/**
@@ -44,28 +45,30 @@ class MazeLayout {
 			if (row < 0 || row >= rows.length) return
 			var newRow = rows[row]
 			if (column < 0 || column >= newRow.length) return
+			var cell = newRow[column]
 			// Check left and right
-			if (column - 1 >= 0 && newRow[column - 1].hasWallRight == false) setAccessible(row, column - 1)
-			if (newRow[column].hasWallRight == false) setAccessible(row, column + 1)
+			if (column - 1 >= 0 && newRow[column - 1].hasWallRight == false) setAccessible(row, column - 1, cell.isAccessible == "after_down" ? "after_down" : "always")
+			if (newRow[column].hasWallRight == false) setAccessible(row, column + 1, cell.isAccessible == "after_down" ? "after_down" : "always")
 			// Check up and down
-			if (newRow[column].hasCeiling == false) setAccessible(row + 1, column)
-			if (row - 1 >= 0 && rows[row - 1][column].hasCeiling == false) setAccessible(row - 1, column)
+			if (newRow[column].hasCeiling == false) setAccessible(row + 1, column, cell.isAccessible == "after_down" ? "after_down" : "always")
+			if (row - 1 >= 0 && rows[row - 1][column].hasCeiling == false) setAccessible(row - 1, column, "after_down")
 		}
 		/**
 		 * Set a specific column in this row as accessible.
 		 * @param {number} row
 		 * @param {number} column
+		 * @param {Accessibility} type
 		 */
-		function setAccessible(row, column) {
+		function setAccessible(row, column, type) {
 			if (row < 0 || row >= rows.length) return
 			var newRow = rows[row]
-			if (column < 0 || column >= newRow.length || newRow[column].isAccessible == true) return
-			newRow[column].isAccessible = true
+			if (column < 0 || column >= newRow.length || newRow[column].isAccessible != "never") return
+			newRow[column].isAccessible = type
 			needToReset[0] = true
 		}
 		for (var i = this.rows.length - 1; i >= 0; i--) {
 			for (var j = 0; j < this.width; j++) {
-				if (this.rows[i][j].isAccessible) {
+				if (this.rows[i][j].isAccessible != "never") {
 					setAdjacentAccessible(i, j)
 				}
 			}
@@ -81,7 +84,7 @@ class MazeLayout {
 			newRow.push({
 				hasWallRight: Math.random() < 0.4,
 				hasCeiling: Math.random() < 0.6,
-				isAccessible: false
+				isAccessible: "never"
 			})
 			if (i == this.width - 1) {
 				newRow[i].hasWallRight = true
@@ -104,14 +107,14 @@ class MazeLayout {
 			}
 			this.updateAccessibility();
 			if (this.extraLogging) {
-				console.log(`Row ${this.rows.length} attempt ${tries}:`)
+				console.log(`Rows ${this.rows.length - this.amt_new_rows} to ${this.rows.length} attempt ${tries}:`)
 				this.printInfo()
 			}
 			// Check whether there is at least one column that
 			// is considered accessible AND the ceiling at that column is gone
 			var isValid = false;
 			for (var i = 0; i < newRow.length; i++) {
-				if (newRow[i].isAccessible && !newRow[i].hasCeiling) {
+				if (newRow[i].isAccessible != "never" && !newRow[i].hasCeiling) {
 					// The cell in the next row directly above this
 					// cell is accessible.
 					isValid = true;
@@ -125,7 +128,7 @@ class MazeLayout {
 		}
 		// Save the row!
 		this.updateAccessibility()
-		console.log(`Successfully generated row ${this.rows.length} after ${tries} tries`)
+		console.log(`Successfully generated rows ${this.rows.length - this.amt_new_rows} to ${this.rows.length} after ${tries} tries`)
 	}
 	/**
 	 * @param {number} n
@@ -188,8 +191,15 @@ class MazeDrawing {
 				boxes.push(Box.fromTopLeft((c * this.cellWidth) - this.wallThickness, (rowBottom - this.cellHeight) - this.wallThickness, this.cellWidth + this.wallThickness, this.wallThickness, false))
 			}
 			// Accessibility
-			if (row[c].isAccessible) {
+			if (row[c].isAccessible == "always") {
 				boxes.push(new NonSolidBox(
+					((c + 0.5) * this.cellWidth) - (this.wallThickness / 2),
+					(rowBottom - (0.5 * this.cellHeight)) - (this.wallThickness / 2),
+					this.wallThickness,
+					this.wallThickness
+				))
+			} else if (row[c].isAccessible == "after_down") {
+				boxes.push(new HighlightedNonSolidBox(
 					((c + 0.5) * this.cellWidth) - (this.wallThickness / 2),
 					(rowBottom - (0.5 * this.cellHeight)) - (this.wallThickness / 2),
 					this.wallThickness,
