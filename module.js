@@ -94,6 +94,8 @@ class PhysicsObject extends GameObject {
 		/** @type {Matter.Body} */
 		this.body = body
 		Body.setPosition(this.body, { x, y })
+		// @ts-ignore
+		this.body._PhysicsObject = this
 	}
 	add() {
 		super.add()
@@ -115,6 +117,10 @@ class PhysicsObject extends GameObject {
 	getWidth() { return 50; }
 	getHeight() { return 50; }
 	getStyles() { return "background: black;"; }
+	/**
+	 * @param {PhysicsObject} other
+	 */
+	collided(other) {}
 }
 class Box extends PhysicsObject {
 	/**
@@ -177,5 +183,18 @@ Events.on(engine, "afterUpdate", () => {
 	camera.tick()
 	for (var o of objects) {
 		o.tick()
+	}
+})
+Events.on(engine, "collisionStart", (e) => {
+	for (var pair of e.pairs) {
+		/** @type {PhysicsObject} */
+		// @ts-ignore
+		var objectA = pair.bodyA._PhysicsObject
+		/** @type {PhysicsObject} */
+		// @ts-ignore
+		var objectB = pair.bodyB._PhysicsObject
+		// Collision
+		objectA.collided(objectB)
+		objectB.collided(objectA)
 	}
 })

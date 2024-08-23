@@ -30,7 +30,39 @@ class Player extends Box {
 	}
 	remove() {
 		super.remove()
+		player = null
 		camera.target.object = null
+		PlayerFragment.spawn(this)
+	}
+}
+class PlayerFragment extends Box {
+	static gridsize = 4;
+	/**
+	 * @param {number} x
+	 * @param {number} y
+	 * @param {number} vx
+	 * @param {number} vy
+	 */
+	constructor(x, y, vx, vy) {
+		var pxsize = 50 / PlayerFragment.gridsize
+		super(x + (pxsize / 2), y + (pxsize / 2), pxsize, pxsize, true)
+		Body.setVelocity(this.body, {
+			x: vx + ((Math.random() - 0.5) / 10),
+			y: vy + ((Math.random() - 0.5) / 10)
+		})
+	}
+	/**
+	 * @param {Player} p
+	 */
+	static spawn(p) {
+		var pxsize = 50 / PlayerFragment.gridsize
+		for (var x = 0; x < PlayerFragment.gridsize; x++) {
+			for (var y = 0; y < PlayerFragment.gridsize; y++) {
+				var sx = p.x + (x * pxsize) - 25;
+				var sy = p.y + (y * pxsize) - 25;
+				(new PlayerFragment(sx, sy, p.body.velocity.x, p.body.velocity.y)).add();
+			}
+		}
 	}
 }
 class Spike extends PhysicsObject {
@@ -66,17 +98,17 @@ class Spike extends PhysicsObject {
 		this.x -= q.x
 		this.y -= q.y
 	}
-	tick() {
-		super.tick()
-		if (player == null) return
-		var collision = Matter.Collision.collides(this.body, player.body)
-		if (collision != null) {
-			player.remove()
-		}
-	}
 	getWidth() { return Spike.size * 2; }
 	getHeight() { return Spike.size * 2; }
 	getStyles() { return "background: red; clip-path: polygon(0% 100%, 100% 100%, 50% 0%);" }
+	/**
+	 * @param {PhysicsObject} other
+	 */
+	collided(other) {
+		if (other == player) {
+			player.remove()
+		}
+	}
 }
 
 function clearScreen() {
