@@ -169,6 +169,7 @@ class MazeDrawing {
 	static cellWidth = 150
 	static cellHeight = 150
 	static wallThickness = 30
+	static showAccessibility = false
 	/**
 	 * @param {number} i
 	 * @param {MazeRow} row
@@ -189,22 +190,32 @@ class MazeDrawing {
 			// Ceiling
 			if (row[c].hasCeiling) {
 				boxes.push(Box.fromTopLeft((c * this.cellWidth) - this.wallThickness, (rowBottom - this.cellHeight) - this.wallThickness, this.cellWidth + this.wallThickness, this.wallThickness, false))
+				if (row[c].isAccessible && Math.random() < 0.1) {
+					// Spike top
+					boxes.push(new Spike((c + 0.5) * this.cellWidth, rowBottom - this.cellHeight, 180))
+				}
+			}
+			// Spike bottom
+			if (Math.random() < 0.1) {
+				boxes.push(new Spike((c + 0.5) * this.cellWidth, rowBottom - this.wallThickness, 0))
 			}
 			// Accessibility
-			if (row[c].isAccessible == "always") {
-				boxes.push(new NonSolidBox(
-					((c + 0.5) * this.cellWidth) - (this.wallThickness / 2),
-					(rowBottom - (0.5 * this.cellHeight)) - (this.wallThickness / 2),
-					this.wallThickness,
-					this.wallThickness
-				))
-			} else if (row[c].isAccessible == "after_down") {
-				boxes.push(new HighlightedNonSolidBox(
-					((c + 0.5) * this.cellWidth) - (this.wallThickness / 2),
-					(rowBottom - (0.5 * this.cellHeight)) - (this.wallThickness / 2),
-					this.wallThickness,
-					this.wallThickness
-				))
+			if (this.showAccessibility) {
+				if (row[c].isAccessible == "always") {
+					boxes.push(new NonSolidBox(
+						((c + 0.5) * this.cellWidth) - (this.wallThickness / 2),
+						(rowBottom - (0.5 * this.cellHeight)) - (this.wallThickness / 2),
+						this.wallThickness,
+						this.wallThickness
+					))
+				} else if (row[c].isAccessible == "after_down") {
+					boxes.push(new HighlightedNonSolidBox(
+						((c + 0.5) * this.cellWidth) - (this.wallThickness / 2),
+						(rowBottom - (0.5 * this.cellHeight)) - (this.wallThickness / 2),
+						this.wallThickness,
+						this.wallThickness
+					))
+				}
 			}
 		}
 		return boxes

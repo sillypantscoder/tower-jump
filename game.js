@@ -28,6 +28,55 @@ class Player extends Box {
 		var v = Body.getVelocity(this.body)
 		Body.setVelocity(this.body, Vector.create(v.x, (v.y / 1) - 11))
 	}
+	remove() {
+		super.remove()
+		camera.target.object = null
+	}
+}
+class Spike extends PhysicsObject {
+	static size = 20;
+	/**
+	 * @param {number} x
+	 * @param {number} y
+	 * @param {number} deg
+	 */
+	constructor(x, y, deg) {
+		var rad = deg * (Math.PI / 180)
+		var xoffset = -1 * Spike.size * Math.sin(rad)
+		var yoffset = -1 * Spike.size * Math.cos(rad)
+		var q = Spike.getMysteryOffset(rad)
+		super(x + xoffset + q.x, y + yoffset + q.y, Bodies.fromVertices(0, 0, [[
+			{ x: -Spike.size, y: Spike.size },
+			{ x:  Spike.size, y: Spike.size },
+			{ x: 0, y: -Spike.size }
+		]], { isStatic: true }))
+		this.deg = deg
+		Body.setAngle(this.body, rad)
+	}
+	/**
+	 * @param {number} rad
+	 */
+	static getMysteryOffset(rad) {
+		var x = 5 * Math.sin(rad)
+		var y = 5 * Math.cos(rad)
+		return { x, y }
+	}
+	adjustPosition() {
+		var q = Spike.getMysteryOffset(this.body.angle)
+		this.x -= q.x
+		this.y -= q.y
+	}
+	tick() {
+		super.tick()
+		if (player == null) return
+		var collision = Matter.Collision.collides(this.body, player.body)
+		if (collision != null) {
+			player.remove()
+		}
+	}
+	getWidth() { return Spike.size * 2; }
+	getHeight() { return Spike.size * 2; }
+	getStyles() { return "background: red; clip-path: polygon(0% 100%, 100% 100%, 50% 0%);" }
 }
 
 function clearScreen() {

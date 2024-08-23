@@ -1,5 +1,6 @@
 var HEIGHT = window.innerHeight
 var WIDTH = window.innerWidth
+var RENDER_ENABLED = false
 
 // module aliases
 var Engine = Matter.Engine,
@@ -10,9 +11,29 @@ var Engine = Matter.Engine,
 	Vector = Matter.Vector,
 	Body = Matter.Body,
 	Constraint = Matter.Constraint,
-	Events = Matter.Events;
+	Events = Matter.Events,
+	Vertices = Matter.Vertices;
 
 var engine = Engine.create();
+
+/**
+ * @type {Matter.Render | undefined}
+ */
+var render;
+if (RENDER_ENABLED) {
+	render = Render.create({
+		element: document.body,
+		engine,
+		options: {
+			wireframeBackground: "transparent",
+			height: HEIGHT,
+			width: WIDTH,
+			// @ts-ignore
+			enabled: true
+		}
+	});
+	Render.run(render)
+}
 
 var runner = Runner.create();
 Runner.run(runner, engine);
@@ -36,6 +57,10 @@ var camera = {
 		camera.x = ((camera.x * 10) + camera.target.x) / 11
 		camera.y = ((camera.y * 10) + camera.target.y) / 11
 		camera.zoom = ((camera.zoom * 10) + camera.target.zoom) / 11
+		if (render) Render.lookAt(render, {
+			min: { x: camera.x, y: camera.y },
+			max: { x: camera.x + WIDTH, y: camera.y + HEIGHT }
+		})
 	}
 }
 

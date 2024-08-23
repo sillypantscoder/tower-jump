@@ -8,3 +8,6 @@ body > div {
 	font-family: sans-serif;
 	font-size: 50px;
 }
+canvas {
+	z-index: 10000;
+}
